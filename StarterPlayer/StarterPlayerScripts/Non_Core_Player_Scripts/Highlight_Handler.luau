@@ -1,6 +1,6 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService "Players"
+local RunService = game:GetService "RunService"
+local CollectionService = game:GetService "CollectionService"
 
 local chests = {}
 local player = Players.LocalPlayer
@@ -13,7 +13,7 @@ local function removeChest(chest)
 	chests[chest] = nil
 end
 
-for _, obj in CollectionService:GetTagged("TreasureChest") do
+for _, obj in CollectionService:GetTagged "TreasureChest" do
 	addChest(obj)
 end
 

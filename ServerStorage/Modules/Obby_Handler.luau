@@ -1,13 +1,15 @@
---[[ Services ]]--
+--[[ Services ]]
+--
 
-local replicated_storage = game:GetService("ReplicatedStorage")
-local server_storage = game:GetService("ServerStorage")
-local players = game:GetService("Players")
-local tween_service = game:GetService("TweenService")
-local run_service = game:GetService("RunService")
-local badge_service = game:GetService("BadgeService")
+local replicated_storage = game:GetService "ReplicatedStorage"
+local server_storage = game:GetService "ServerStorage"
+local players = game:GetService "Players"
+local tween_service = game:GetService "TweenService"
+local run_service = game:GetService "RunService"
+local badge_service = game:GetService "BadgeService"
 
---[[ Variables ]]--
+--[[ Variables ]]
+--
 
 local general_functions = require(server_storage.Modules.General_Functions)
 local remotes = replicated_storage.Remotes
@@ -24,8 +26,8 @@ local teleport_player = server_storage.Bindables.Teleport_Player
 local globals = require(replicated_storage.Client_Accessible_Modules.Global_Replacements)
 
 local event_badge_ids = {
-	["Blox City"] = 2127252077;
-	["Paradise Island"] = 2127252073;
+	["Blox City"] = 2127252077,
+	["Paradise Island"] = 2127252073,
 }
 
 local function kill_player(hit)
@@ -43,19 +45,18 @@ local function kill_player(hit)
 end
 
 local function initialize_obby(obby, prize)
-	
 	local self = {}
 	local connections = {}
 	local tweens = {}
-	
+
 	local award_part = obby.AwardPart
 	local tween_info = TweenInfo.new(2)
-	local checkpoints = obby:FindFirstChild("Checkpoints")
-	
+	local checkpoints = obby:FindFirstChild "Checkpoints"
+
 	character_debounce_list = {}
 	hit_checkpoints = {}
 	spawn_cframe = CFrame.new(obby.ObbySpawn.Position + Vector3.new(0, 7, 0))
-	
+
 	self.stop = function()
 		running = false
 		for i = #connections, 1, -1 do
@@ -69,47 +70,61 @@ local function initialize_obby(obby, prize)
 	end
 
 	self.start = function()
-		
 		running = true
-		
-		table.insert(connections, award_part.Touched:Connect(function(hit)
-			local character = hit.Parent
-			local player = players:GetPlayerFromCharacter(character)
-			if player and not character_debounce_list[character] then
-				character_debounce_list[character] = true
-				local completed_event = replicated_storage[character.Name].Completed_Event
-				
-				if not completed_event.Value then
-					completed_event.Value = true
-					general_functions.Give_Cash(player, prize, true)
-					alert:FireClient(player, "Reward", "Congratulations! You've been awarded "..prize.." cash for completing the "..obby.Parent.Name.." event! You can do the obby again, but you can not be awarded again during this island visit.")
-					task.spawn(function()
-						if not badge_service:UserHasBadgeAsync(player.UserId, event_badge_ids[obby.Parent.Name]) then
-							badge_service:AwardBadge(player.UserId, event_badge_ids[obby.Parent.Name])
+
+		table.insert(
+			connections,
+			award_part.Touched:Connect(function(hit)
+				local character = hit.Parent
+				local player = players:GetPlayerFromCharacter(character)
+				if player and not character_debounce_list[character] then
+					character_debounce_list[character] = true
+					local completed_event = replicated_storage[character.Name].Completed_Event
+
+					if not completed_event.Value then
+						completed_event.Value = true
+						general_functions.Give_Cash(player, prize, true)
+						alert:FireClient(
+							player,
+							"Reward",
+							"Congratulations! You've been awarded "
+								.. prize
+								.. " cash for completing the "
+								.. obby.Parent.Name
+								.. " event! You can do the obby again, but you can not be awarded again during this island visit."
+						)
+						task.spawn(function()
+							if
+								not badge_service:UserHasBadgeAsync(player.UserId, event_badge_ids[obby.Parent.Name])
+							then
+								badge_service:AwardBadge(player.UserId, event_badge_ids[obby.Parent.Name])
+							end
+						end)
+					end
+					local humanoid_root_part = character:FindFirstChild "HumanoidRootPart"
+					if humanoid_root_part then
+						hit_checkpoints[humanoid_root_part] = nil
+					end
+					teleport_player:Fire(player)
+					task.wait(1)
+					character_debounce_list[character] = nil
+				end
+			end)
+		)
+
+		for _, obj in ipairs(obby:GetDescendants()) do
+			local intermittent_time = obj:FindFirstChild "IntermittentTime"
+
+			if intermittent_time then
+				local particle_emitter = obj:FindFirstChildWhichIsA "ParticleEmitter"
+				table.insert(
+					connections,
+					obj.Touched:Connect(function(hit)
+						if particle_emitter.Enabled then
+							kill_player(hit)
 						end
 					end)
-				end
-				local humanoid_root_part = character:FindFirstChild("HumanoidRootPart")
-				if humanoid_root_part then
-					hit_checkpoints[humanoid_root_part] = nil
-				end
-				teleport_player:Fire(player)
-				task.wait(1)
-				character_debounce_list[character] = nil
-			end
-		end))
-		
-		for _, obj in ipairs(obby:GetDescendants()) do
-			
-			local intermittent_time = obj:FindFirstChild("IntermittentTime")
-			
-			if intermittent_time then
-				local particle_emitter = obj:FindFirstChildWhichIsA("ParticleEmitter")
-				table.insert(connections, obj.Touched:Connect(function(hit)
-					if particle_emitter.Enabled then
-						kill_player(hit)
-					end
-				end))
+				)
 				task.spawn(function()
 					while current_event_active.Value do
 						task.wait(intermittent_time.Value)
@@ -119,39 +134,29 @@ local function initialize_obby(obby, prize)
 			elseif obj.Name == "Death" then
 				table.insert(connections, obj.Touched:Connect(kill_player))
 			end
-			
-			local start_pos, end_pos = obj:FindFirstChild("StartPosition"), obj:FindFirstChild("EndPosition")
+
+			local start_pos, end_pos = obj:FindFirstChild "StartPosition", obj:FindFirstChild "EndPosition"
 			if start_pos and end_pos then
-				
-				local tween_time = obj:FindFirstChild("TweenTime")
+				local tween_time = obj:FindFirstChild "TweenTime"
 				local tween_info = tween_time and TweenInfo.new(tween_time.Value) or tween_info
-				
-				local toward_end_tween = tween_service:Create(
-					obj,
-					tween_info,
-					{Position = end_pos.Value}
-				)
-				local toward_start_tween = tween_service:Create(
-					obj,
-					tween_info,
-					{Position = start_pos.Value}
-				)
-				
+
+				local toward_end_tween = tween_service:Create(obj, tween_info, { Position = end_pos.Value })
+				local toward_start_tween = tween_service:Create(obj, tween_info, { Position = start_pos.Value })
+
 				table.insert(tweens, toward_end_tween)
 				table.insert(tweens, toward_start_tween)
-				
+
 				toward_end_tween.Completed:Connect(function()
 					toward_start_tween:Play()
 				end)
 				toward_start_tween.Completed:Connect(function()
 					toward_end_tween:Play()
 				end)
-				
+
 				toward_end_tween:Play()
-				
 			end
-			
-			local boulder_start = obj:FindFirstChild("Boulder_Start")
+
+			local boulder_start = obj:FindFirstChild "Boulder_Start"
 			if boulder_start then
 				task.spawn(function()
 					local boulder_start = boulder_start.Value
@@ -177,7 +182,7 @@ local function initialize_obby(obby, prize)
 			end
 		end
 	end
-	
+
 	if checkpoints then
 		for _, checkpoint in ipairs(checkpoints:GetChildren()) do
 			local checkpoint_cframe = CFrame.new(checkpoint.Position)
@@ -195,4 +200,3 @@ local function initialize_obby(obby, prize)
 end
 
 return initialize_obby
-

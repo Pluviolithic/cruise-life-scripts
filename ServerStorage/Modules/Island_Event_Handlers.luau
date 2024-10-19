@@ -2,16 +2,18 @@
 	By Eric/AetherProgrammer.
 --]]
 
---[[ Services ]]--
+--[[ Services ]]
+--
 
-local tween_service = game:GetService("TweenService")
-local replicated_storage = game:GetService("ReplicatedStorage")
-local players = game:GetService("Players")
-local server_storage = game:GetService("ServerStorage")
-local lighting_service = game:GetService("Lighting")
-local run_service = game:GetService("RunService")
+local tween_service = game:GetService "TweenService"
+local replicated_storage = game:GetService "ReplicatedStorage"
+local players = game:GetService "Players"
+local server_storage = game:GetService "ServerStorage"
+local lighting_service = game:GetService "Lighting"
+local run_service = game:GetService "RunService"
 
---[[ Variables ]]--
+--[[ Variables ]]
+--
 
 local modules = server_storage.Modules
 local sword_handler = require(modules.Sword_Handler)
@@ -34,8 +36,8 @@ local samurai_arena_floor = samurai_island_model.ArenaFloor
 
 local functions = {}
 local area_dimensions = {
-	["Colosseum"] = arena_floor.Position;
-	["SamuraiArena"] = samurai_arena_floor.Position;
+	["Colosseum"] = arena_floor.Position,
+	["SamuraiArena"] = samurai_arena_floor.Position,
 }
 
 local globals = require(replicated_storage.Client_Accessible_Modules.Global_Replacements)
@@ -50,60 +52,65 @@ local function is_in_area(pos, area_name)
 		end
 	else
 		local x, y, z = pos.X, pos.Y, pos.Z
-		local x_a, x_b, y_a, y_b, z_a, z_b = dimensions.x_a, dimensions.x_b, dimensions.y_a, dimensions.y_b, dimensions.z_a, dimensions.z_b
+		local x_a, x_b, y_a, y_b, z_a, z_b =
+			dimensions.x_a, dimensions.x_b, dimensions.y_a, dimensions.y_b, dimensions.z_a, dimensions.z_b
 		return x_a > x and x_b < x and y_a > y and y_b < y and z_a > z and z_b < z
 	end
 end
 
 functions["Blox City"] = function()
-	
-	alert:FireAllClients("EventDesc", "The Blox City event has started! The mayor of Blox City wants you to test their new security system for their bank. Make it to the vault for an award!")
-	
+	alert:FireAllClients(
+		"EventDesc",
+		"The Blox City event has started! The mayor of Blox City wants you to test their new security system for their bank. Make it to the vault for an award!"
+	)
+
 	local player_list = players:GetPlayers()
 	local island = workspace["Blox City"]
 	local bank_obby = island.BankObby
 	local handler = obby_handler(bank_obby, 250)
-	
+
 	local bank_interior = island["Bank Interior"]
 	local gate = bank_interior.Gate
-	
+
 	gate.Transparency = 1
 	gate.CanCollide = false
-	
-	local lights = island:FindFirstChild("Lights")
+
+	local lights = island:FindFirstChild "Lights"
 	if lights then
-		local connection; connection = lighting_service:GetPropertChangedSignal("ClockTime"):Connect(function()
+		local connection
+		connection = lighting_service:GetPropertChangedSignal("ClockTime"):Connect(function()
 			if lighting_service.ClockTime >= 17.7 then
 				connection:Disconnect()
 				for _, light in ipairs(lights:GetDescendants()) do
-					if light:IsA("Light") then
+					if light:IsA "Light" then
 						light.Enabled = true
 					end
 				end
 			end
 		end)
 	end
-	
+
 	for i = 1, #player_list do
 		local player = player_list[i]
 		local player_data_folder = replicated_storage:FindFirstChild(player.Name)
 		if player_data_folder then
 			player_data_folder.Completed_Event.Value = false
 		end
-	end	
-	
+	end
+
 	handler.start()
 	current_event_active:GetPropertyChangedSignal("Value"):Wait()
 	gate.Transparency = 0
 	gate.CanCollide = true
 	handler.stop()
-	
 end
 
 functions["Olde Town"] = function()
-	
-	alert:FireAllClients("EventDesc", "The Olde Town event has started! Head to the colosseum to sword fight other players! You must Knockout 4 players for an award.")
-	
+	alert:FireAllClients(
+		"EventDesc",
+		"The Olde Town event has started! Head to the colosseum to sword fight other players! You must Knockout 4 players for an award."
+	)
+
 	local player_list = players:GetPlayers()
 	for i = 1, #player_list do
 		local player = player_list[1]
@@ -115,12 +122,13 @@ functions["Olde Town"] = function()
 	end
 
 	local island = workspace["Olde Town"]
-	local lights = island:FindFirstChild("Lights")
+	local lights = island:FindFirstChild "Lights"
 	if lights then
-		local connection; connection = lighting_service:GetPropertChangedSignal("ClockTime"):Connect(function()
+		local connection
+		connection = lighting_service:GetPropertChangedSignal("ClockTime"):Connect(function()
 			if lighting_service.ClockTime >= 17.7 then
 				for _, light in ipairs(lights:GetDescendants()) do
-					if light:IsA("Light") then
+					if light:IsA "Light" then
 						light.Enabled = true
 					end
 				end
@@ -128,16 +136,14 @@ functions["Olde Town"] = function()
 			end
 		end)
 	end
-	
-	while current_event_active.Value do
 
+	while current_event_active.Value do
 		for i = 1, #player_list do
-			
 			local player = player_list[i]
 			local player_data_folder = replicated_storage:FindFirstChild(player.Name)
 			local character = player.Character
-			local humanoid_root_part = character and character:FindFirstChild("HumanoidRootPart") or nil
-			
+			local humanoid_root_part = character and character:FindFirstChild "HumanoidRootPart" or nil
+
 			if player_data_folder then
 				local is_in_arena = player_data_folder.Is_In_Arena
 				if character and humanoid_root_part then
@@ -157,18 +163,18 @@ functions["Olde Town"] = function()
 					is_in_arena.Value = false
 				end
 			end
-			
 		end
-		
+
 		task.wait(1)
 		player_list = players:GetPlayers()
 	end
-	
 end
 
 functions["Samurai Island"] = function()
-
-	alert:FireAllClients("EventDesc", "The Samurai Island event has started! Head to the Samurai Arena to sword fight other players! You must Knockout 4 players for an award.")
+	alert:FireAllClients(
+		"EventDesc",
+		"The Samurai Island event has started! Head to the Samurai Arena to sword fight other players! You must Knockout 4 players for an award."
+	)
 	local player_list = players:GetPlayers()
 	for i = 1, #player_list do
 		local player = player_list[1]
@@ -180,12 +186,13 @@ functions["Samurai Island"] = function()
 	end
 
 	local island = workspace["Samurai Island"]
-	local lights = island:FindFirstChild("Lights")
+	local lights = island:FindFirstChild "Lights"
 	if lights then
-		local connection; connection = lighting_service:GetPropertChangedSignal("ClockTime"):Connect(function()
+		local connection
+		connection = lighting_service:GetPropertChangedSignal("ClockTime"):Connect(function()
 			if lighting_service.ClockTime >= 17.7 then
 				for _, light in ipairs(lights:GetDescendants()) do
-					if light:IsA("Light") then
+					if light:IsA "Light" then
 						light.Enabled = true
 					end
 				end
@@ -195,13 +202,11 @@ functions["Samurai Island"] = function()
 	end
 
 	while current_event_active.Value do
-
 		for i = 1, #player_list do
-
 			local player = player_list[i]
 			local player_data_folder = replicated_storage:FindFirstChild(player.Name)
 			local character = player.Character
-			local humanoid_root_part = character and character:FindFirstChild("HumanoidRootPart") or nil
+			local humanoid_root_part = character and character:FindFirstChild "HumanoidRootPart" or nil
 
 			if player_data_folder then
 				local is_in_arena = player_data_folder.Is_In_Arena
@@ -222,17 +227,18 @@ functions["Samurai Island"] = function()
 					is_in_arena.Value = false
 				end
 			end
-
 		end
 
 		task.wait(1)
 		player_list = players:GetPlayers()
 	end
-
 end
 
 functions["Paradise Island"] = function()
-	alert:FireAllClients("EventDesc", "The Paradise Island event has started! Make it to the end of the tomb for a reward! Watch out for traps!")
+	alert:FireAllClients(
+		"EventDesc",
+		"The Paradise Island event has started! Make it to the end of the tomb for a reward! Watch out for traps!"
+	)
 	local island = workspace["Paradise Island"]
 	local tomb_obby = island.Tomb
 	local gate = tomb_obby.Gate
@@ -251,4 +257,3 @@ functions["Paradise Island"] = function()
 end
 
 return functions
-
